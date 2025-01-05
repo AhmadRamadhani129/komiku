@@ -1,96 +1,195 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, Button, StyleSheet, Alert } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  StyleSheet,
+  Alert,
+  ScrollView,
+} from "react-native";
+import { useValidation } from "react-simple-form-validator";
 
 const AddComic = () => {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [author, setAuthor] = useState("");
-  const [categories, setCategories] = useState("");
-  const [poster, setPoster] = useState("");
+  const [judul_komik, setJudul] = useState("");
+  const [deskripsi_komik, setDeskripsi] = useState("");
+  const [tanggal_rilis, setTanggalRilis] = useState("");
+  const [nama_pengarang, setPengarang] = useState("");
+  const [thumbnail, setThumbnail] = useState("");
 
-  const handleAddComic = async () => {
-    if (!title || !description || !author || !categories || !poster) {
-      Alert.alert("Error", "All fields are required");
-      return;
+  const { isFieldInError, getErrorsInField, isFormValid } = useValidation({
+    fieldsRules: {
+      judul_komik: { required: true },
+      deskripsi_komik: { required: true, minlength: 50 },
+      tanggal_rilis: { required: true, date: true },
+      nama_pengarang: { required: true },
+      thumbnail: { website: true },
+    },
+    state: { judul_komik, deskripsi_komik, tanggal_rilis, nama_pengarang, thumbnail },
+  });
+
+  const renderJudulErrors = () => {
+    if (isFieldInError("judul_komik")) {
+      return getErrorsInField("judul_komik").map((errorMessage, index) => (
+        <Text key={index} style={styles.errorText}>
+          {errorMessage}
+        </Text>
+      ));
     }
+    return null;
+  };
 
+  const renderDeskripsiErrors = () => {
+    if (isFieldInError("deskripsi_komik")) {
+      return getErrorsInField("deskripsi_komik").map((errorMessage, index) => (
+        <Text key={index} style={styles.errorText}>
+          {errorMessage}
+        </Text>
+      ));
+    }
+    return null;
+  };
+
+  const renderTanggalRilisErrors = () => {
+    if (isFieldInError("tanggal_rilis")) {
+      return getErrorsInField("tanggal_rilis").map((errorMessage, index) => (
+        <Text key={index} style={styles.errorText}>
+          {errorMessage}
+        </Text>
+      ));
+    }
+    return null;
+  };
+
+  const renderPengarangErrors = () => {
+    if (isFieldInError("nama_pengarang")) {
+      return getErrorsInField("nama_pengarang").map((errorMessage, index) => (
+        <Text key={index} style={styles.errorText}>
+          {errorMessage}
+        </Text>
+      ));
+    }
+    return null;
+  };
+
+  const renderThumbnailErrors = () => {
+    if (isFieldInError("thumbnail")) {
+      return getErrorsInField("thumbnail").map((errorMessage, index) => (
+        <Text key={index} style={styles.errorText}>
+          {errorMessage}
+        </Text>
+      ));
+    }
+    return null;
+  };
+
+  const renderButtonSubmit = () => {
+    if (isFormValid) {
+      return <Button title="Submit" onPress={submitData} />;
+    }
+    return null;
+  };
+
+  const submitData = () => {
+    const options = {
+      method: "POST",
+      headers: new Headers({
+        "Content-Type": "application/x-www-form-urlencoded",
+      }),
+      body:
+        "judul_komik=" +
+        judul_komik +
+        "&" +
+        "deskripsi_komik=" +
+        deskripsi_komik +
+        "&" +
+        "tanggal_rilis=" +
+        tanggal_rilis +
+        "&" +
+        "nama_pengarang=" +
+        nama_pengarang +
+        "&" +
+        "thumbnail=" +
+        thumbnail,
+    };
     try {
-      const response = await fetch("https://ubaya.xyz/react/160421129/addcomic.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title,
-          description,
-          author,
-          categories: categories.split(","), // Ubah string kategori menjadi array
-          poster,
-        }),
-      });
-
-      const result = await response.json();
-      if (result.success) {
-        Alert.alert("Success", "Comic added successfully");
-        setTitle("");
-        setDescription("");
-        setAuthor("");
-        setCategories("");
-        setPoster("");
-      } else {
-        Alert.alert("Error", result.message || "Failed to add comic");
-      }
+      fetch("https://ubaya.xyz/react/160421129/UAS/addkomik.php", options)
+        .then((response) => response.json())
+        .then((resjson) => {
+          console.log(resjson);
+          if (resjson.result === "success") alert("sukses");
+        });
     } catch (error) {
-      Alert.alert("Error", "An error occurred while adding the comic");
+      console.log(error);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Add Comic</Text>
+    <ScrollView style={styles.container}>
       <TextInput
+        style={styles.input}
         placeholder="Title"
-        style={styles.input}
-        value={title}
-        onChangeText={setTitle}
+        onChangeText={setJudul}
+        value={judul_komik}
       />
+      {renderJudulErrors()}
+
+      <Text>Deskripsi</Text>
       <TextInput
-        placeholder="Description"
-        style={styles.input}
-        value={description}
-        onChangeText={setDescription}
+        multiline
+        numberOfLines={4}
+        style={styles.input2}
+        onChangeText={setDeskripsi}
       />
+      {renderDeskripsiErrors()}
+
+      <Text>Tanggal Rilis</Text>
       <TextInput
-        placeholder="Author"
         style={styles.input}
-        value={author}
-        onChangeText={setAuthor}
+        onChangeText={setTanggalRilis}
+        value={tanggal_rilis}
       />
-      <TextInput
-        placeholder="Categories (comma-separated)"
-        style={styles.input}
-        value={categories}
-        onChangeText={setCategories}
-      />
-      <TextInput
-        placeholder="Poster URL"
-        style={styles.input}
-        value={poster}
-        onChangeText={setPoster}
-      />
-      <Button title="Add" onPress={handleAddComic} />
-    </View>
+      {renderTanggalRilisErrors()}
+
+      <Text>Nama Pengarang</Text>
+      <TextInput style={styles.input} onChangeText={setPengarang} value={nama_pengarang} />
+      {renderPengarangErrors()}
+
+      <Text>Thumbnail</Text>
+      <TextInput style={styles.input} onChangeText={setThumbnail} value={thumbnail} />
+      {renderThumbnailErrors()}
+
+      {renderButtonSubmit()}
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: "#fff" },
-  title: { fontSize: 24, fontWeight: "bold", marginBottom: 16 },
+  container: {
+    padding: 20,
+  },
   input: {
-    borderWidth: 1,
+    height: 40,
     borderColor: "#ccc",
-    padding: 8,
-    marginBottom: 8,
-    borderRadius: 4,
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    marginBottom: 10,
+    paddingHorizontal: 10,
+    borderRadius: 5,
+  },
+  input2: {
+    height: 120,
+    borderColor: "#ccc",
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    marginBottom: 10,
+    paddingHorizontal: 10,
+    borderRadius: 5,
+  },
+  errorText: {
+    color: "red",
+    fontSize: 12,
+    marginBottom: 10,
   },
 });
-
 export default AddComic;
