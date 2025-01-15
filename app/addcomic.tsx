@@ -1,32 +1,65 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
-  Text,
   TextInput,
-  Button,
+  Text,
   StyleSheet,
-  Alert,
   ScrollView,
+  Image,
+  Button,
+  FlatList,
 } from "react-native";
 import { useValidation } from "react-simple-form-validator";
+import * as ImagePicker from "expo-image-picker";
+import RBSheet from "react-native-raw-bottom-sheet";
+import { Picker } from "@react-native-picker/picker";
 
-const AddComic = () => {
-  const [judul_komik, setJudul] = useState("");
-  const [deskripsi_komik, setDeskripsi] = useState("");
+export default function NewComic() {
+  const [judul_komik, setJudulKomik] = useState("");
+  const [deskripsi_komik, setDeskripsiKomik] = useState("");
   const [tanggal_rilis, setTanggalRilis] = useState("");
-  const [nama_pengarang, setPengarang] = useState("");
+  const [nama_pengarang, setNamaPengarang] = useState("");
   const [thumbnail, setThumbnail] = useState("");
+  const [kategori, setKategori] = useState("");
+  const [selectedKategori, setSelectedKategori] = useState("");
+  const [kategoriData, setKategoriData] = useState([]);
+  const [halamans, setHalamans] = useState(null);
+  const [imageUri, setImageUri] = useState("");
+  const [triggerRefresh, setTriggerRefresh] = useState(false);
+  const refRBSheet = useRef();
 
   const { isFieldInError, getErrorsInField, isFormValid } = useValidation({
     fieldsRules: {
       judul_komik: { required: true },
-      deskripsi_komik: { required: true, minlength: 50 },
+      deskripsi_komik: { required: true, minlength: 30 },
       tanggal_rilis: { required: true, date: true },
       nama_pengarang: { required: true },
       thumbnail: { website: true },
+      kategori: { required: true },
     },
-    state: { judul_komik, deskripsi_komik, tanggal_rilis, nama_pengarang, thumbnail },
+    state: {
+      judul_komik,
+      deskripsi_komik,
+      tanggal_rilis,
+      nama_pengarang,
+      thumbnail,
+    },
   });
+
+  useEffect(() => {
+    const fetchKategori = async () => {
+      try {
+        const response = await fetch(
+          "https://ubaya.xyz/react/160421129/UAS/kategori.php"
+        );
+        const resjson = await response.json();
+        setKategoriData(resjson.data);
+      } catch (error) {
+        console.error("Failed to fetch categories:", error);
+      }
+    };
+    fetchKategori();
+  }, []);
 
   const renderJudulErrors = () => {
     if (isFieldInError("judul_komik")) {
@@ -83,11 +116,79 @@ const AddComic = () => {
     return null;
   };
 
+  const renderPoster = () => {
+    if (thumbnail !== "" && !isFieldInError("thumbnail")) {
+      return (
+        <Image
+          style={{ width: 300, height: 400 }}
+          resizeMode="contain"
+          source={{ uri: thumbnail }}
+        />
+      );
+    }
+    return null;
+  };
+
   const renderButtonSubmit = () => {
     if (isFormValid) {
       return <Button title="Submit" onPress={submitData} />;
     }
     return null;
+  };
+
+  const imgGaleri = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+    if (!result.canceled) {
+      setImageUri(result.assets[0].uri);
+    }
+  };
+
+  const renderImageUri = () => {
+    if (imageUri != "") {
+      return (
+        <View>
+          <Image
+            style={{ width: 300, height: 200 }}
+            resizeMode="contain"
+            source={{ uri: imageUri }}
+          />
+          <Button title="Upload" onPress={uploadScene} />
+        </View>
+      );
+    }
+    return null;
+  };
+
+  const uploadScene = async () => {
+    const data = new FormData();
+
+    const response = await fetch(imageUri);
+    const blob = await response.blob();
+    data.append("image", blob, "scene.png");
+
+    const options = {
+      method: "POST",
+      body: data,
+      headers: {},
+    };
+
+    try {
+      fetch("https://ubaya.xyz/react/160421129/UAS/uploadhalaman.php", options)
+        .then((response) => response.json())
+        .then((resjson) => {
+          console.log(resjson);
+          if (resjson.result === "success") alert("sukses");
+          setTriggerRefresh((prev) => !prev);
+          setImageUri("");
+        });
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const submitData = () => {
@@ -97,72 +198,158 @@ const AddComic = () => {
         "Content-Type": "application/x-www-form-urlencoded",
       }),
       body:
-        "judul_komik=" +
+        "judul=" +
         judul_komik +
         "&" +
-        "deskripsi_komik=" +
+        "deskripsi=" +
         deskripsi_komik +
         "&" +
         "tanggal_rilis=" +
         tanggal_rilis +
         "&" +
-        "nama_pengarang=" +
+        "pengarang=" +
         nama_pengarang +
         "&" +
         "thumbnail=" +
-        thumbnail,
+        thumbnail +
+        "&" +
+        "kategori=" +
+        kategori,
     };
-    try {
-      fetch("https://ubaya.xyz/react/160421129/UAS/addkomik.php", options)
-        .then((response) => response.json())
-        .then((resjson) => {
+    fetch("https://ubaya.xyz/react/160421129/UAS/addkomik.php", options)
+      .then((response) => {
+        return response.text(); // Ubah dari `response.json()` ke `response.text()`
+      })
+      .then((text) => {
+        try {
+          const resjson = JSON.parse(text); // Parsing JSON secara manual
           console.log(resjson);
-          if (resjson.result === "success") alert("sukses");
-        });
-    } catch (error) {
-      console.log(error);
-    }
+          if (resjson.result === "success") {
+            alert("Komik berhasil ditambahkan!");
+          } else {
+            alert("Terjadi kesalahan: " + resjson.message);
+          }
+        } catch (error) {
+          console.error("Error parsing JSON:", error, "Response text:", text);
+          alert("Terjadi kesalahan pada server.");
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        alert("Gagal mengirim data: " + error.message);
+      });
   };
 
   return (
     <ScrollView style={styles.container}>
       <TextInput
         style={styles.input}
-        placeholder="Title"
-        onChangeText={setJudul}
+        placeholder="Judul Komik"
+        onChangeText={setJudulKomik}
         value={judul_komik}
       />
       {renderJudulErrors()}
 
-      <Text>Deskripsi</Text>
+      <Text>Deskripsi Komik</Text>
       <TextInput
         multiline
         numberOfLines={4}
         style={styles.input2}
-        onChangeText={setDeskripsi}
+        placeholder="Deskripsi Komik"
+        onChangeText={setDeskripsiKomik}
+        value={deskripsi_komik}
       />
       {renderDeskripsiErrors()}
 
       <Text>Tanggal Rilis</Text>
       <TextInput
         style={styles.input}
+        placeholder="Tanggal Rilis"
         onChangeText={setTanggalRilis}
         value={tanggal_rilis}
       />
       {renderTanggalRilisErrors()}
 
       <Text>Nama Pengarang</Text>
-      <TextInput style={styles.input} onChangeText={setPengarang} value={nama_pengarang} />
+      <TextInput
+        style={styles.input}
+        placeholder="Nama Pengarang"
+        onChangeText={setNamaPengarang}
+        value={nama_pengarang}
+      />
       {renderPengarangErrors()}
 
-      <Text>Thumbnail</Text>
-      <TextInput style={styles.input} onChangeText={setThumbnail} value={thumbnail} />
+      <Text>Thumbnail URL</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="URL Thumbnail"
+        onChangeText={setThumbnail}
+        value={thumbnail}
+      />
       {renderThumbnailErrors()}
+      {renderPoster()}
+
+      <Text>Kategori</Text>
+      <Picker
+        selectedValue={selectedKategori}
+        onValueChange={(itemValue) => setSelectedKategori(itemValue)}
+      >
+        <Picker.Item label="Pilih Kategori" value="" />
+        {kategoriData.length > 0 ? (
+          kategoriData.map((item) => (
+            <Picker.Item
+              key={item.id_kategori}
+              label={item.nama_kategori}
+              value={item.nama_kategori}
+            />
+          ))
+        ) : (
+          /* Display message if no categories found */
+          <Text>No categories available.</Text>
+        )}
+      </Picker>
 
       {renderButtonSubmit()}
+
+      <Text>Halaman: </Text>
+      <FlatList
+        data={halamans}
+        keyExtractor={(item) => item}
+        renderItem={({ item }) => (
+          <View>
+            <Image
+              style={{ width: 300, height: 200 }}
+              resizeMode="contain"
+              source={{ uri: "https://ubaya.xyz/react/160421129/UAS/" + item }}
+            ></Image>
+          </View>
+        )}
+      ></FlatList>
+
+      <Button
+        title="Pick Halaman"
+        onPress={() => refRBSheet.current.open()}
+      ></Button>
+      {renderImageUri()}
+
+      <RBSheet
+        ref={refRBSheet}
+        height={100}
+        openDuration={250}
+        customStyles={{
+          container: {
+            justifyContent: "center",
+            alignItems: "center",
+          },
+        }}
+      >
+        <View style={styles.viewRow}>
+          <Button title="Gallery" onPress={imgGaleri} />
+        </View>
+      </RBSheet>
     </ScrollView>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -191,5 +378,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginBottom: 10,
   },
+  viewRow: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    paddingRight: 50,
+    margin: 3,
+  },
 });
-export default AddComic;

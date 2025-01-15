@@ -11,28 +11,47 @@ function Login() {
   const [password, setPassword] = useState(""); // State for password
 
   const doLogin = async () => {
-    // const options = {
-    //   method: "POST",
-    //   headers: new Headers({
-    //     "Content-Type": "application/x-www-form-urlencoded",
-    //   }),
-    //   body: "user_id=" + username + "&user_password=" + password,
-    // };
-    // const response = await fetch(
-    //   "https://ubaya.xyz/react/160421129/login.php",
-    //   options
-    // );
-    // const json = await response.json();
+    if (!username || !password) {
+      alert("Username and password must not be empty");
+      return;
+    }
 
-    // if (json.result == "success")
-    if (password === '1234') {
-      try {
-        await AsyncStorage.setItem("username", username);
-        alert("Login successful");
-        login(); // Use the login function from context
-      } catch (e) {
-        console.error("Error saving data to AsyncStorage", e);
+    const options = {
+      method: "POST",
+      headers: new Headers({
+        "Content-Type": "application/x-www-form-urlencoded",
+      }),
+      body: "user_id=" + username + "&user_password=" + password,
+    };
+
+    try {
+      const response = await fetch(
+        "https://ubaya.xyz/react/160421129/UAS/login.php",
+        options
+      );
+
+      if (response.ok) {
+        const json = await response.json();
+        console.log(json); // Menampilkan respons API di console
+
+        if (json.result === "success") {
+          try {
+            await AsyncStorage.setItem("username", username);
+            console.log("Username saved:", username); // Menampilkan username yang berhasil disimpan
+            alert("Login successful");
+            login(); // Use the login function from context
+          } catch (e) {
+            console.error("Error saving data to AsyncStorage", e);
+          }
+        } else {
+          alert("Login failed: " + json.message); // Menampilkan pesan gagal login
+        }
+      } else {
+        alert("Network error or server is down");
       }
+    } catch (error) {
+      console.error("Error during login:", error);
+      alert("An error occurred, please try again later.");
     }
   };
 

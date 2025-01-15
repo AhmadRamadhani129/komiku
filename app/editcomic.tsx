@@ -15,33 +15,32 @@ import { useValidation } from "react-simple-form-validator";
 import * as ImagePicker from "expo-image-picker";
 import RBSheet from "react-native-raw-bottom-sheet";
 
-export default function EditMovie() {
+export default function EditComic() {
   const [judul_komik, setJudul] = useState("");
   const [deskripsi_komik, setDeskripsi] = useState("");
   const [tanggal_rilis, setTanggalRilis] = useState("");
   const [nama_pengarang, setPengarang] = useState("");
   const [thumbnail, setThumbnail] = useState("");
-  const [kategoris, setKategoris] = useState(null);
+  const [kategori, setKategori] = useState(null);
   const [komikId, setKomikId] = useState("");
-  const [scenes, setScenes] = useState(null);
+  const [halamans, setHalamans] = useState(null);
   const [komikDetails, setKomikDetails] = useState({
     judul_komik: "",
     deskripsi_komik: "",
     tanggal_rilis: "",
     nama_pengarang: "",
     thumbnail: "",
-    kategoris: null,
-    scenes: null,
+    kategori: null,
+    halamans: null,
   });
   const params = useLocalSearchParams();
-  // const [pilihanGenres, setPilihanGenres] = useState([]);
-  // const [selectedGenre, setSelectedGenre] = useState("");
+  const [pilihanKategori, setPilihanKategori] = useState([]);
+  const [selectedKategori, setSelectedKategori] = useState("");
   const [triggerRefresh, setTriggerRefresh] = useState(false);
   const [imageUri, setImageUri] = useState("");
   const refRBSheet = useRef();
 
   useEffect(() => {
-    console.log(params.comicid);
     if (params.comicid) {
       setKomikId(params.comicid.toString());
     }
@@ -52,7 +51,7 @@ export default function EditMovie() {
       const options = {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: "id=" + params.comicid + "&" + "id_komik=" + params.comicid,
+        body: "id=" + komikId + "&" + "id_komik=" + komikId,
       };
       try {
         const response = await fetch(
@@ -62,18 +61,18 @@ export default function EditMovie() {
         const resjson = await response.json();
         setKomikDetails(resjson.data);
         const response2 = await fetch(
-          "https://ubaya.xyz/react/160421129/genrelist.php",
+          "https://ubaya.xyz/react/160421129/listkategori.php",
           options
         );
         const resjson2 = await response2.json();
-        // setPilihanGenres(resjson2.data);
+        setPilihanKategori(resjson2.data)
       } catch (error) {
-        console.error("Failed to fetch movie details:", error);
+        console.error("Failed to fetch comic details:", error);
       }
     };
 
     if (komikId) {
-      fetchKomikDetails(); // Call fetchMovieDetails
+      fetchKomikDetails();
     }
   }, [komikId, triggerRefresh]);
 
@@ -84,74 +83,79 @@ export default function EditMovie() {
       setTanggalRilis(komikDetails.tanggal_rilis || "");
       setPengarang(komikDetails.nama_pengarang || "");
       setThumbnail(komikDetails.thumbnail || "");
-      // setGenres(movieDetails.genres);
-      // setScenes(movieDetails.scenes);
+      setKategori(komikDetails.kategori);
+      setHalamans(komikDetails.halamans);
     }
   }, [komikDetails]);
 
-  // useEffect(() => {
-  //   const addMovieGenre = async () => {
-  //     const options = {
-  //       method: "POST",
-  //       headers: { "Content-Type": "application/x-www-form-urlencoded" },
-  //       body: "movie_id=" + komikId + "&" + "genre_id=" + selectedGenre,
-  //     };
-  //     try {
-  //       const response = await fetch(
-  //         "https://ubaya.xyz/react/160421129/addmoviegenre.php",
-  //         options
-  //       );
-  //       response.json().then(async (resjson) => {
-  //         console.log(resjson);
-  //         if (resjson.result === "success") alert("sukses");
-  //         setTriggerRefresh((prev) => !prev);
-  //       });
-  //     } catch (error) {
-  //       console.error("Failed to fetch movie details:", error);
-  //     }
-  //   };
+  useEffect(() => {
+    const addKomikKategori = async () => {
+      const options = {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: "id_komik=" + komikId + "&" + "id_kategori=" + selectedKategori,
+      };
+      try {
+        const response = await fetch(
+          "https://ubaya.xyz/react/160421129/addkategorikomik.php",
+          options
+        );
+        response.json().then(async (resjson) => {
+          console.log(resjson);
+          if (resjson.result === "success") alert("sukses");
+          setTriggerRefresh((prev) => !prev);
+        });
+      } catch (error) {
+        console.error("Failed to fetch movie details:", error);
+      }
+    };
 
-  //   if (selectedGenre) {
-  //     addMovieGenre();
-  //   }
-  // }, [selectedGenre]);
+    if (selectedKategori) {
+      addKomikKategori();
+    }
+  }, [selectedKategori]);
 
   useEffect(() => {}, [imageUri]);
 
-  // const deleteGenre = async () => {
-  //   const options = {
-  //     method: "POST",
-  //     headers: { "Content-Type": "application/x-www-form-urlencoded" },
-  //     body: `movie_id=${movieId}&genre_id=${genres}`,
-  //   };
-  //   try {
-  //     const response = await fetch(
-  //       "https://ubaya.xyz/react/160421129/deletemoviegenre.php",
-  //       options
-  //     );
-  //     const resjson = await response.json();
-  //     console.log(resjson);
-  //     if (resjson.result === "success") {
-  //       alert("Genre successfully deleted!");
-  //       setTriggerRefresh((prev) => !prev);
-  //     } else {
-  //       alert("Failed to delete genre!");
-  //     }
-  //   } catch (error) {
-  //     console.error("Failed to delete genre:", error);
-  //   }
-  // };
+  const deleteKategori = async () => {
+    const options = {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: `id_komik=${komikId}&id_kategori=${kategori}`,
+    };
+    try {
+      const response = await fetch(
+        "https://ubaya.xyz/react/160421129/UAS/deletekategorikomik.php",
+        options
+      );
+      const resjson = await response.json();
+      console.log(resjson);
+      if (resjson.result === "success") {
+        alert("Kategori berhasil dihapus!");
+        setTriggerRefresh((prev) => !prev);
+      } else {
+        alert("Gagal menghapus kategori!");
+      }
+    } catch (error) {
+      console.error("Gagal menghapus kategori:", error);
+    }
+  };
 
   const { isFieldInError, getErrorsInField, isFormValid } = useValidation({
     fieldsRules: {
-      title: { required: true },
-      overview: { required: true, minlength: 50 },
-      runtime: { required: true, numbers: true },
-      releasedate: { required: true, date: true },
-      homepage: { website: true },
-      url: { website: true },
+      judul_komik: { required: true },
+      deskripsi_komik: { required: true, minlength: 10 },
+      tanggal_rilis: { required: true, date: true },
+      nama_pengarang: { website: true },
+      thumbnail: { website: true },
     },
-    state: { judul_komik, deskripsi_komik, tanggal_rilis, nama_pengarang, thumbnail },
+    state: {
+      judul_komik,
+      deskripsi_komik,
+      tanggal_rilis,
+      nama_pengarang,
+      thumbnail,
+    },
   });
 
   const renderJudulErrors = () => {
@@ -229,15 +233,15 @@ export default function EditMovie() {
     return null;
   };
 
-  // const renderComboBox = () => {
-  //   return (
-  //     <RNPickerSelect
-  //       onValueChange={(value) => setSelectedGenre(value)}
-  //       items={pilihanGenres}
-  //       placeholder={{ label: "Tambahkan Genre Baru", value: null }}
-  //     />
-  //   );
-  // };
+  const renderComboBox = () => {
+    return (
+      <RNPickerSelect
+        onValueChange={(value) => setSelectedKategori(value)}
+        items={pilihanKategori}
+        placeholder={{ label: "Tambahkan Kategori Baru", value: null }}
+      />
+    );
+  };
 
   const imgGaleri = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -274,22 +278,22 @@ export default function EditMovie() {
         "Content-Type": "application/x-www-form-urlencoded",
       }),
       body:
-        "title=" +
+        "judul_komik=" +
         judul_komik +
         "&" +
-        "homepage=" +
-        nama_pengarang +
-        "&" +
-        "overview=" +
+        "deskripsi_komik=" +
         deskripsi_komik +
         "&" +
-        "release_date=" +
+        "nama_pengarang=" +
+        nama_pengarang +
+        "&" +
+        "tanggal_rilis=" +
         tanggal_rilis +
         "&" +
-        "url=" +
+        "thumbnail=" +
         thumbnail +
         "&" +
-        "id_komik=" +
+        "komik_id=" +
         komikId,
     };
     try {
@@ -353,60 +357,63 @@ export default function EditMovie() {
     <ScrollView style={styles.container}>
       <TextInput
         style={styles.input}
-        placeholder="Judul"
+        placeholder="Judul Komik"
         onChangeText={setJudul}
         value={judul_komik}
       />
       {renderJudulErrors()}
 
-      <Text>Deskripsi</Text>
       <TextInput
-        multiline
-        numberOfLines={4}
-        style={styles.input2}
-        value={deskripsi_komik}
+        style={styles.input}
+        placeholder="Deskripsi"
         onChangeText={setDeskripsi}
+        value={deskripsi_komik}
       />
       {renderDeskripsiErrors()}
 
-      <Text>Tanggal Rilis</Text>
       <TextInput
         style={styles.input}
+        placeholder="Tanggal Rilis"
         onChangeText={setTanggalRilis}
         value={tanggal_rilis}
       />
       {renderTanggalRilisErrors()}
 
-      <Text>Nama Pengarang</Text>
       <TextInput
         style={styles.input}
+        placeholder="Pengarang"
         onChangeText={setPengarang}
         value={nama_pengarang}
       />
       {renderPengarangErrors()}
-
-      <Text>Thumbnail</Text>
-      <TextInput style={styles.input} onChangeText={setThumbnail} value={thumbnail} />
-      {renderThumbnailErrors()}
       {renderPoster()}
+
+      <TextInput
+        style={styles.input}
+        placeholder="Thumbnail"
+        onChangeText={setThumbnail}
+        value={thumbnail}
+      />
+      {renderThumbnailErrors()}
 
       {renderButtonSubmit()}
 
-      {/* <Text>Genre:</Text>
+      <Text>Kategori: </Text>
       <FlatList
-        data={genres}
-        keyExtractor={(item) => item.genre_name}
+        data={kategori}
+        keyExtractor={(item) => item.nama_kategori}
         renderItem={({ item }) => (
           <View>
-            <Text>{item.genre_name}</Text>
-            <Button title="X" color="red" onPress={() => deleteGenre()} />
+            <Text>{item.nama_kategori}</Text>
+            <Button title="X" color="red" onPress={() => deleteKategori()} />
           </View>
         )}
       />
-      {renderComboBox()} */}
-      <Text>Scenes:</Text>
+      {renderComboBox()}
+
+      <Text>Halaman: </Text>
       <FlatList
-        data={scenes}
+        data={halamans}
         keyExtractor={(item) => item}
         renderItem={({ item }) => (
           <View>
@@ -419,8 +426,9 @@ export default function EditMovie() {
           </View>
         )}
       ></FlatList>
+
       <Button
-        title="Pilih Halaman"
+        title="Pick Halaman"
         onPress={() => refRBSheet.current.open()}
       ></Button>
       {renderImageUri()}
@@ -437,7 +445,7 @@ export default function EditMovie() {
         }}
       >
         <View style={styles.viewRow}>
-          <Button title="Galeri" onPress={imgGaleri} />
+          <Button title="Gallery" onPress={imgGaleri} />
         </View>
       </RBSheet>
     </ScrollView>
@@ -479,3 +487,4 @@ const styles = StyleSheet.create({
     margin: 3,
   },
 });
+
