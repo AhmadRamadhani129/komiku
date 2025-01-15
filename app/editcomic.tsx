@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   View,
@@ -39,6 +39,7 @@ export default function EditComic() {
   const [triggerRefresh, setTriggerRefresh] = useState(false);
   const [imageUri, setImageUri] = useState("");
   const refRBSheet = useRef();
+  const router = useRouter();
 
   useEffect(() => {
     if (params.comicid) {
@@ -309,25 +310,31 @@ export default function EditComic() {
   };
 
   const uploadScene = async () => {
-    const data = new FormData();
-    data.append("id_komik", komikId);
-
-    const response = await fetch(imageUri);
-    const blob = await response.blob();
-    data.append("image", blob, "scene.png");
-
-    const options = {
-      method: "POST",
-      body: data,
-      headers: {},
-    };
+    const data = new FormData();  
+    data.append("id_komik", komikId);  
+  
+    const response = await fetch(imageUri);  
+    const blob = await response.blob();  
+    data.append("image", blob, "scene.png");  
+  
+    const options = {  
+      method: "POST",  
+      body: data,  
+      headers: {},  
+    }; 
 
     try {
       fetch("https://ubaya.xyz/react/160421129/UAS/uploadhalaman.php", options)
         .then((response) => response.json())
         .then((resjson) => {
           console.log(resjson);
-          if (resjson.result === "success") alert("sukses");
+          if (resjson.result === "success") {
+            alert("sukses")
+            router.push({
+              pathname: "/detailcomic",  
+              params: { idKomik: komikId },
+            });
+          };
           setTriggerRefresh((prev) => !prev);
           setImageUri("");
         });
