@@ -32,39 +32,41 @@ class ListComic extends React.Component {
     }
   };
 
-  showData(data: any) {
-    return (
-      <View style={styles.container}>
-        <FlatList
-          data={data}
-          keyExtractor={(item) => item.id_komik.toString()}
-          renderItem={({ item }) => (
-            <Card>
-              <Card.Title>{item.judul_komik}</Card.Title>
-              <Card.Divider />
-              <View style={{ position: "relative", alignItems: "center" }}>
-                <Image
-                  style={{ width: 300, height: 500 }}
-                  resizeMode="contain"
-                  source={{ uri: item.thumbnail }}
-                />
-                <Text>{item.deskripsi_komik}</Text>
-                <Link
-                  push
-                  href={{
-                    pathname: "/detailcomic",
-                    params: { idKomik: item.id_komik },
-                  }}
-                >
-                  Lihat Detail
-                </Link>
-              </View>
-            </Card>
-          )}
-        />
-      </View>
-    );
-  }
+  showData(data: any) {  
+    return (  
+      <View style={styles.container}>  
+        <FlatList  
+          data={data}  
+          keyExtractor={(item) => item.id_komik.toString()}  
+          renderItem={({ item }) => (  
+            <Card>  
+              <Card.Title>{item.judul_komik}</Card.Title>  
+              <Card.Divider />  
+              <View style={{ position: "relative", alignItems: "center" }}>  
+                <Image  
+                  style={{ width: 300, height: 500 }}  
+                  resizeMode="contain"  
+                  source={{ uri: item.thumbnail }}  
+                />  
+                <Text numberOfLines={3} ellipsizeMode="tail">  
+                  {item.deskripsi_komik}  
+                </Text>  
+                <Link  
+                  push  
+                  href={{  
+                    pathname: "/detailcomic",  
+                    params: { idKomik: item.id_komik },  
+                  }}  
+                >  
+                  Lihat Detail  
+                </Link>  
+              </View>  
+            </Card>  
+          )}  
+        />  
+      </View>  
+    );  
+  }    
 
   componentDidMount() {
     this.fetchData();

@@ -208,7 +208,7 @@ const DetailComic = () => {
                   renderItem={({ item }) => (
                     <View>
                       <Image
-                        style={{ width: 300, height: 200 }}
+                        style={{ width: 350, height: 600 }}
                         resizeMode="contain"
                         source={{
                           uri: `https://ubaya.xyz/react/160421129/UAS/${item}`,

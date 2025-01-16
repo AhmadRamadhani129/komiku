@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { useNavigation } from '@react-navigation/native';  
 import {
   View,
   TextInput,
@@ -9,6 +10,7 @@ import {
   Button,
   FlatList,
 } from "react-native";
+import { CheckBox } from "@rneui/base";
 import { useValidation } from "react-simple-form-validator";
 import * as ImagePicker from "expo-image-picker";
 import RBSheet from "react-native-raw-bottom-sheet";
@@ -21,12 +23,14 @@ export default function NewComic() {
   const [nama_pengarang, setNamaPengarang] = useState("");
   const [thumbnail, setThumbnail] = useState("");
   const [kategori, setKategori] = useState("");
-  const [selectedKategori, setSelectedKategori] = useState("");
+  const [selectedKategori, setSelectedKategori] = useState([]);  
   const [kategoriData, setKategoriData] = useState([]);
   const [halamans, setHalamans] = useState(null);
   const [imageUri, setImageUri] = useState("");
   const [triggerRefresh, setTriggerRefresh] = useState(false);
   const refRBSheet = useRef();
+  const navigation = useNavigation();  
+
 
   const { isFieldInError, getErrorsInField, isFormValid } = useValidation({
     fieldsRules: {
@@ -214,30 +218,32 @@ export default function NewComic() {
         thumbnail +
         "&" +
         "kategori=" +
-        kategori,
+        JSON.stringify(selectedKategori),
     };
-    fetch("https://ubaya.xyz/react/160421129/UAS/addkomik.php", options)
-      .then((response) => {
-        return response.text(); // Ubah dari `response.json()` ke `response.text()`
-      })
-      .then((text) => {
-        try {
-          const resjson = JSON.parse(text); // Parsing JSON secara manual
-          console.log(resjson);
-          if (resjson.result === "success") {
-            alert("Komik berhasil ditambahkan!");
-          } else {
-            alert("Terjadi kesalahan: " + resjson.message);
-          }
-        } catch (error) {
-          console.error("Error parsing JSON:", error, "Response text:", text);
-          alert("Terjadi kesalahan pada server.");
-        }
-      })
-      .catch((error) => {
-        console.error("Error:", error);
-        alert("Gagal mengirim data: " + error.message);
-      });
+    fetch("https://ubaya.xyz/react/160421129/UAS/addkomik.php", options)  
+    .then((response) => {  
+      return response.text();
+    })  
+    .then((text) => {  
+      console.log("Response text:", text);
+      try {  
+        const resjson = JSON.parse(text);  
+        console.log(resjson);  
+        if (resjson.result === "success") {  
+          alert("Komik berhasil ditambahkan!");
+          navigation.navigate("home");  
+        } else {  
+          alert("Terjadi kesalahan: " + resjson.message);  
+        }  
+      } catch (error) {  
+        console.error("Error parsing JSON:", error, "Response text:", text);  
+        alert("Terjadi kesalahan pada server.");  
+      }  
+    })  
+    .catch((error) => {  
+      console.error("Error:", error);  
+      alert("Gagal mengirim data: " + error.message);  
+    });  
   };
 
   return (
@@ -290,24 +296,25 @@ export default function NewComic() {
       {renderPoster()}
 
       <Text>Kategori</Text>
-      <Picker
-        selectedValue={selectedKategori}
-        onValueChange={(itemValue) => setSelectedKategori(itemValue)}
-      >
-        <Picker.Item label="Pilih Kategori" value="" />
-        {kategoriData.length > 0 ? (
-          kategoriData.map((item) => (
-            <Picker.Item
-              key={item.id_kategori}
-              label={item.nama_kategori}
-              value={item.nama_kategori}
-            />
-          ))
-        ) : (
-          /* Display message if no categories found */
-          <Text>No categories available.</Text>
-        )}
-      </Picker>
+      <FlatList  
+        data={kategoriData}  
+        keyExtractor={(item) => item.id_kategori.toString()}  
+        renderItem={({ item }) => (  
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>  
+            <CheckBox  
+              checked={selectedKategori.includes(item.id_kategori)}  
+              onPress={() => {  
+                if (selectedKategori.includes(item.id_kategori)) {  
+                  setSelectedKategori(selectedKategori.filter(id => id !== item.id_kategori));  
+                } else {  
+                  setSelectedKategori([...selectedKategori, item.id_kategori]);  
+                }  
+              }}  
+            />  
+            <Text>{item.nama_kategori}</Text>  
+          </View>  
+        )}  
+      />  
 
       {renderButtonSubmit()}
 
