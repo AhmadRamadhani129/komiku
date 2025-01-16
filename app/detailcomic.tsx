@@ -10,6 +10,7 @@ import {
 import React, { useEffect, useState } from "react";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { Card, Icon, Image } from "@rneui/base";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const DetailComic = () => {
   const [comicId, setComicId] = useState("");
@@ -28,6 +29,7 @@ const DetailComic = () => {
   const [newRating, setNewRating] = useState(0);
   const [loading, setLoading] = useState(true);
   const [commentsLoading, setCommentsLoading] = useState(true);
+  const [username, setUsername] = useState("");
 
   const router = useRouter();
   const params = useLocalSearchParams();
@@ -105,15 +107,36 @@ const DetailComic = () => {
     }
   }, [comicId]);
 
+  useEffect(() => {
+    const getUsername = async () => {
+      try {
+        const id = await AsyncStorage.getItem("username");
+        if (id) {
+          setUsername(id);
+        } else {
+          alert("Please log in to comment or rate");
+        }
+      } catch (error) {
+        console.error("Failed to retrieve user ID:", error);
+      }
+    };
+    getUsername();
+  }, []);
+
   const submitRatingComment = async () => {
     if (!newComment.trim() || newRating === 0) {
       alert("Please enter both a comment and rating");
       return;
     }
 
+    if (!username) {
+      alert("You must be logged in to submit a comment or rating");
+      return;
+    }
+
     const formData = new URLSearchParams({
       id_komik: comicId.toString(),
-      id_user: "1",
+      id_user: username, // Gunakan user_id dari state
       rating: newRating.toString(),
       komentar: newComment,
     }).toString();
@@ -134,7 +157,7 @@ const DetailComic = () => {
         alert(data.message);
         setNewComment("");
         setNewRating(0);
-        fetchComicDetails();
+        fetchComicDetails(); // Refresh data
       }
     } catch (error) {
       console.error("Error submitting rating and comment:", error);
