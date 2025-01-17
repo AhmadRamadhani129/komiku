@@ -1,38 +1,25 @@
-import { StyleSheet, View, Text, FlatList, TextInput } from "react-native";
-import React from "react";
-import { ScrollView } from "react-native-gesture-handler";
-import { Card, Image } from "@rneui/base";
-import { Link } from "expo-router";
+import React, { useEffect, useState } from "react";  
+import { StyleSheet, View, Text, FlatList, TextInput, Button } from "react-native";  
+import { ScrollView } from "react-native-gesture-handler";  
+import { Card, Image } from "@rneui/base";  
+import { useNavigation } from '@react-navigation/native';  
 
-class ListComic extends React.Component {
-  state = {
-    data: null,
-    cari: "",
-  };
+const ListComic = () => {  
+  const [data, setData] = useState(null);  
+  const [cari, setCari] = useState("");  
+  const navigation = useNavigation(); // Menggunakan hook useNavigation  
 
-  fetchData = async () => {
-    const options = {
-      method: "POST",
-      headers: new Headers({
-        "Content-Type": "application/x-www-form-urlencoded",
-      }),
-      body: "cari=" + this.state.cari,
-    };
-    try {
-      fetch("https://ubaya.xyz/react/160421129/UAS/komik.php")
-        .then((response) => response.json())
-        .then((resjson) => {
-          this.setState({
-            data: resjson.data,
-            // tes: resjson.data[0].title,
-          });
-        });
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  const fetchData = async () => {  
+    try {  
+      const response = await fetch("https://ubaya.xyz/react/160421129/UAS/komik.php");  
+      const resjson = await response.json();  
+      setData(resjson.data);  
+    } catch (error) {  
+      console.log(error);  
+    }  
+  };  
 
-  showData(data: any) {  
+  const showData = (data) => {  
     return (  
       <View style={styles.container}>  
         <FlatList  
@@ -51,93 +38,86 @@ class ListComic extends React.Component {
                 <Text numberOfLines={3} ellipsizeMode="tail">  
                   {item.deskripsi_komik}  
                 </Text>  
-                <Link  
-                  push  
-                  href={{  
-                    pathname: "/detailcomic",  
-                    params: { idKomik: item.id_komik },  
-                  }}  
-                >  
-                  Lihat Detail  
-                </Link>  
+                <Button  
+                  title="Lihat Detail"  
+                  onPress={() => navigation.navigate('detailComic', { idKomik: item.id_komik })} // Menggunakan navigation dari hook  
+                />  
               </View>  
             </Card>  
           )}  
         />  
       </View>  
     );  
-  }    
+  };  
 
-  componentDidMount() {
-    this.fetchData();
-  }
+  useEffect(() => {  
+    fetchData();  
+  }, []);
 
-  render() {
-    return (
-      <ScrollView>
-        <Card>
-          <View style={styles.viewRow}>
-            <Text>Cari </Text>
-            <TextInput
-              style={styles.input}
-              onChangeText={(cari) => this.setState({ cari })}
-              onSubmitEditing={() => this.fetchData()}
-            />
-          </View>
-        </Card>
-        {this.showData(this.state.data)}
-      </ScrollView>
-    );
-  }
-}
+  return (  
+    <ScrollView>  
+      <Card>  
+        <View style={styles.viewRow}>  
+          <Text>Cari </Text>  
+          <TextInput  
+            style={styles.input}  
+            onChangeText={setCari}  
+            onSubmitEditing={fetchData}  
+          />  
+        </View>  
+      </Card>  
+      {data && showData(data)} {}  
+    </ScrollView>  
+  );  
+};  
 
-export default ListComic;
+export default ListComic;  
 
-const styles = StyleSheet.create({
-  page: {
-    flex: 1,
-    backgroundColor: "#f8f9fa",
-    padding: 10,
-  },
-  container: {
-    padding: 10,
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    elevation: 2,
-  },
-  header: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 10,
-    textAlign: "center",
-  },
-  list: {
-    paddingBottom: 10,
-  },
-  card: {
-    backgroundColor: "#e9ecef",
-    borderRadius: 8,
-    padding: 15,
-    marginVertical: 8,
-    marginHorizontal: 10,
-    elevation: 1,
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#495057",
-  },
-  input: {
-    height: 40,
-    width: 200,
-    borderWidth: 1,
-    padding: 10,
-  },
-  viewRow: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    alignItems: "center",
-    paddingRight: 50,
-    margin: 3,
-  },
+const styles = StyleSheet.create({  
+  page: {  
+    flex: 1,  
+    backgroundColor: "#f8f9fa",  
+    padding: 10,  
+  },  
+  container: {  
+    padding: 10,  
+    backgroundColor: "#fff",  
+    borderRadius: 8,  
+    elevation: 2,  
+  },  
+  header: {  
+    fontSize: 18,  
+    fontWeight: "bold",  
+    marginBottom: 10,  
+    textAlign: "center",  
+  },  
+  list: {  
+    paddingBottom: 10,  
+  },  
+  card: {  
+    backgroundColor: "#e9ecef",  
+    borderRadius: 8,  
+    padding: 15,  
+    marginVertical: 8,  
+    marginHorizontal: 10,  
+    elevation: 1,  
+  },  
+  title: {  
+    fontSize: 16,  
+    fontWeight: "600",  
+    color: "#495057",  
+  },  
+  input: {  
+    height: 40,  
+    width: 200,  
+    borderWidth: 1,  
+    padding: 10,  
+  },  
+  viewRow: {  
+    flexDirection: "row",  
+    justifyContent: "flex-end",  
+    alignItems: "center",  
+    paddingRight: 50,  
+    margin: 3,  
+  },  
 });
