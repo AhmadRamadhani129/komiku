@@ -40,7 +40,7 @@ const ListComic = () => {
                 </Text>  
                 <Button  
                   title="Lihat Detail"  
-                  onPress={() => navigation.navigate('detailComic', { idKomik: item.id_komik })} // Menggunakan navigation dari hook  
+                  onPress={() => navigation.navigate('detailcomic', { idKomik: item.id_komik })} // Menggunakan navigation dari hook  
                 />  
               </View>  
             </Card>  
