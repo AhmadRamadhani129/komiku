@@ -14,6 +14,7 @@ import RNPickerSelect from "react-native-picker-select";
 import { useValidation } from "react-simple-form-validator";
 import * as ImagePicker from "expo-image-picker";
 import RBSheet from "react-native-raw-bottom-sheet";
+import { useNavigation } from "@react-navigation/native";  
 
 export default function EditComic() {
   const [judul_komik, setJudul] = useState("");
@@ -40,6 +41,8 @@ export default function EditComic() {
   const [imageUri, setImageUri] = useState("");
   const refRBSheet = useRef();
   const router = useRouter();
+  const navigation = useNavigation();  
+
 
   useEffect(() => {
     if (params.comicid) {
@@ -303,6 +306,7 @@ export default function EditComic() {
         .then((resjson) => {
           console.log(resjson);
           if (resjson.result === "success") alert("sukses");
+          navigation.navigate("detailcomic");  
         });
     } catch (error) {
       console.log(error);
@@ -343,22 +347,27 @@ export default function EditComic() {
     }
   };
 
-  const deleteScene = async () => {
-    const options = {
-      method: "POST",
-    };
-    try {
-      fetch("https://ubaya.xyz/react/160421129/UAS/deletescene.php", options)
-        .then((response) => response.json())
-        .then((resjson) => {
-          console.log(resjson);
-          if (resjson.result === "success") alert("sukses");
-          setTriggerRefresh((prev) => !prev);
-        });
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  const deleteScene = async (imageUri) => {    
+    const options = {    
+        method: "POST",    
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },    
+        body: `uri=${encodeURIComponent(imageUri)}`, // Kirim URI gambar    
+    };    
+    try {    
+        const response = await fetch("https://ubaya.xyz/react/160421129/UAS/deletescene.php", options);    
+        const resjson = await response.json();    
+        console.log("Response from server:", resjson); // Log respons dari server    
+        if (resjson.result === "success") {    
+            alert("Gambar berhasil dihapus!");    
+            setTriggerRefresh((prev) => !prev);    
+        } else {    
+            alert("Gagal menghapus gambar: " + resjson.message); // Tampilkan pesan dari server    
+        }    
+    } catch (error) {    
+        console.error("Gagal menghapus gambar:", error);    
+    }    
+};    
+
 
   return (
     <ScrollView style={styles.container}>
@@ -418,21 +427,22 @@ export default function EditComic() {
       />
       {renderComboBox()}
 
-      <Text>Halaman: </Text>
-      <FlatList
-        data={halaman}
-        keyExtractor={(item) => item}
-        renderItem={({ item }) => (
-          <View>
-            <Image
-              style={{ width: 300, height: 200 }}
-              resizeMode="contain"
-              source={{ uri: "https://ubaya.xyz/react/160421129/UAS/" + item }}
-            ></Image>
-            <Button title="Delete" color="red" onPress={() => deleteScene} />
-          </View>
-        )}
-      ></FlatList>
+      <Text>Halaman: </Text>  
+      <FlatList  
+        data={halaman}  
+        keyExtractor={(item) => item}  
+        renderItem={({ item }) => (  
+            <View>  
+                <Image  
+                    style={{ width: 300, height: 200 }}  
+                    resizeMode="contain"  
+                    source={{ uri: "https://ubaya.xyz/react/160421129/UAS/" + item }}  
+                />  
+               <Button title="Delete" color="red" onPress={() => deleteScene(item)} />  
+
+            </View>  
+        )}  
+      />    
       <Button
         title="Pick Halaman"
         onPress={() => refRBSheet.current.open()}

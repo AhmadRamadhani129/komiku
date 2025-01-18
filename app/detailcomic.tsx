@@ -29,7 +29,8 @@ const DetailComic = () => {
   const [newRating, setNewRating] = useState(0);  
   const [loading, setLoading] = useState(true);  
   const [commentsLoading, setCommentsLoading] = useState(true);  
-  const [username, setUsername] = useState("");  
+  const [username, setUsername] = useState("");
+  const [averageRating, setAverageRating] = useState(0); 
   
   const router = useRouter();  
   const params = useLocalSearchParams();  
@@ -53,10 +54,10 @@ const DetailComic = () => {
         options  
       );  
       const resjson = await response.json();  
-      console.log("API Response:", resjson); // Add this line  
+      console.log("API Response:", resjson); 
   
       if (resjson.result === "success") {  
-        console.log("Comic Pages:", resjson.data.halaman); // Add this line  
+        console.log("Comic Pages:", resjson.data.halaman);
         setComicDetails(resjson.data);  
       } else {  
         console.error("Error fetching comic details:", resjson.message);  
@@ -89,7 +90,12 @@ const DetailComic = () => {
         );  
         const data = await response.json();  
         if (data.result === "success" && data.data.komentar) {  
-          setRatingsAndComments(data.data.komentar);  
+          setRatingsAndComments(data.data.komentar);
+
+        const ratings = data.data.komentar.map(comment => parseFloat(comment.rating));  
+        const totalRatings = ratings.reduce((acc, rating) => acc + rating, 0);  
+        const average = totalRatings / ratings.length || 0; // Menghindari pembagian dengan nol  
+        setAverageRating(average);  
         } else {  
           console.error("Error fetching comments:", data.message);  
           setRatingsAndComments([]);  
@@ -190,7 +196,7 @@ const DetailComic = () => {
   };  
   
   return (  
-    <ScrollView>  
+    <ScrollView>
       {loading ? (  
         <Text>Loading...</Text>  
       ) : comicDetails ? (  
@@ -203,11 +209,14 @@ const DetailComic = () => {
                 style={{ width: 300, height: 500 }}  
                 resizeMode="contain"  
                 source={{ uri: comicDetails.thumbnail }}  
-              />  
+              />
+              <Text style={{ fontSize: 18, fontWeight: "bold" }}>  
+                Rating: {averageRating.toFixed(1)}
+              </Text>  
               <Text numberOfLines={10} ellipsizeMode="tail">
                 {comicDetails.deskripsi_komik}
               </Text>  
-              <Text>Kategori:</Text>  
+              <Text style={{ fontSize: 18, fontWeight: "bold" }}>Kategori:</Text>  
               {comicDetails.kategori?.length > 0 ? (  
                 <FlatList  
                   data={comicDetails.kategori}  
@@ -272,8 +281,10 @@ const DetailComic = () => {
                   )}  
                 />  
               ) : (  
+                
                 <Text style={{ marginTop: 10 }}>Tidak ada komentar.</Text>  
-              )}  
+                
+              )} 
               <TextInput  
                 value={newRating.toString()}  
                 onChangeText={(text) => setNewRating(Number(text))}  
@@ -291,8 +302,7 @@ const DetailComic = () => {
                 title="Submit Rating and Comment"  
                 onPress={submitRatingComment}  
               />  
-            </View>  
-            {/* Ganti Link dengan Button untuk Edit */}  
+            </View>    
             <Button  
               title="Edit Komik"  
               onPress={() => {  
