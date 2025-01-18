@@ -23,7 +23,7 @@ export default function EditComic() {
   const [thumbnail, setThumbnail] = useState("");
   const [kategori, setKategori] = useState(null);
   const [komikId, setKomikId] = useState("");
-  const [halamans, setHalamans] = useState(null);
+  const [halaman, setHalaman] = useState(null);
   const [komikDetails, setKomikDetails] = useState({
     judul_komik: "",
     deskripsi_komik: "",
@@ -31,7 +31,7 @@ export default function EditComic() {
     nama_pengarang: "",
     thumbnail: "",
     kategori: null,
-    halamans: null,
+    halaman: null,
   });
   const params = useLocalSearchParams();
   const [pilihanKategori, setPilihanKategori] = useState([]);
@@ -85,7 +85,7 @@ export default function EditComic() {
       setPengarang(komikDetails.nama_pengarang || "");
       setThumbnail(komikDetails.thumbnail || "");
       setKategori(komikDetails.kategori);
-      setHalamans(komikDetails.halamans);
+      setHalaman(komikDetails.halaman);
     }
   }, [komikDetails]);
 
@@ -420,7 +420,7 @@ export default function EditComic() {
 
       <Text>Halaman: </Text>
       <FlatList
-        data={halamans}
+        data={halaman}
         keyExtractor={(item) => item}
         renderItem={({ item }) => (
           <View>
@@ -433,7 +433,6 @@ export default function EditComic() {
           </View>
         )}
       ></FlatList>
-
       <Button
         title="Pick Halaman"
         onPress={() => refRBSheet.current.open()}
